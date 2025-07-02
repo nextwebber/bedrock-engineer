@@ -1,14 +1,14 @@
 import { BedrockSupportRegion, LLM } from '../../../types/llm'
 
-// ヘルパー関数: リージョンからプレフィックスを取得
+// Helper function: Get prefix from region
 function getRegionPrefix(region: string): string {
   if (region.startsWith('us-') || region.startsWith('ca-')) return 'us'
   if (region.startsWith('eu-')) return 'eu'
   if (region.startsWith('ap-') || region.startsWith('sa-')) return 'apac'
-  return 'us' // デフォルト
+  return 'us' // Default
 }
 
-// ヘルパー関数: リージョンをプレフィックスでグループ化
+// Helper function: Group regions by prefix
 function groupRegionsByPrefix(
   regions: BedrockSupportRegion[]
 ): Record<string, BedrockSupportRegion[]> {
@@ -23,7 +23,7 @@ function groupRegionsByPrefix(
   )
 }
 
-// モデル定義の型
+// Model definition type
 interface ModelDefinition {
   baseId: string
   name: string
@@ -36,7 +36,7 @@ interface ModelDefinition {
   }
 }
 
-// 統合されたモデル定義（AWS公式ドキュメント準拠）
+// Unified model definitions (based on AWS official documentation)
 const MODEL_DEFINITIONS: ModelDefinition[] = [
   // Claude 3 Sonnet
   {
@@ -184,7 +184,7 @@ const MODEL_DEFINITIONS: ModelDefinition[] = [
   }
 ]
 
-// Amazon Nova モデル定義
+// Amazon Nova model definitions
 const NOVA_MODELS: ModelDefinition[] = [
   {
     baseId: 'nova-premier-v1:0',
@@ -255,7 +255,7 @@ const NOVA_MODELS: ModelDefinition[] = [
   }
 ]
 
-// その他のモデル定義
+// Other model definitions
 const OTHER_MODELS: ModelDefinition[] = [
   {
     baseId: 'r1-v1:0',
@@ -268,7 +268,7 @@ const OTHER_MODELS: ModelDefinition[] = [
   }
 ]
 
-// 画像生成モデル定義
+// Image generation model definitions
 const IMAGE_GENERATION_MODELS: ModelDefinition[] = [
   // Stability AI models
   {
@@ -355,19 +355,19 @@ const IMAGE_GENERATION_MODELS: ModelDefinition[] = [
   }
 ]
 
-// 全モデル定義を統合
+// Combine all model definitions
 const ALL_MODEL_DEFINITIONS = [
   ...MODEL_DEFINITIONS.map((def) => ({ ...def, provider: 'anthropic' })),
   ...NOVA_MODELS.map((def) => ({ ...def, provider: 'amazon' })),
   ...OTHER_MODELS.map((def) => ({ ...def, provider: 'deepseek' }))
 ]
 
-// モデル生成関数
+// Model generation function
 function generateModelsFromDefinitions(): LLM[] {
   const models: LLM[] = []
 
   ALL_MODEL_DEFINITIONS.forEach((def) => {
-    // ベースモデル
+    // Base model
     if (def.availability.base?.length) {
       const modelId = `${def.provider}.${def.baseId}`
       models.push({
@@ -380,9 +380,9 @@ function generateModelsFromDefinitions(): LLM[] {
       })
     }
 
-    // クロスリージョンモデル（リージョンごとに個別に生成）
+    // Cross-region model (generate separately for each region)
     if (def.availability.crossRegion?.length) {
-      // リージョンをプレフィックスでグループ化
+      // Group regions by prefix
       const regionGroups = groupRegionsByPrefix(def.availability.crossRegion)
 
       Object.entries(regionGroups).forEach(([prefix, regions]) => {
@@ -403,21 +403,21 @@ function generateModelsFromDefinitions(): LLM[] {
   return models
 }
 
-// 生成されたモデル一覧
+// List of generated models
 export const allModels = generateModelsFromDefinitions()
 
-// リージョン別のモデル取得
+// Get models for a specific region
 export const getModelsForRegion = (region: BedrockSupportRegion): LLM[] => {
   const models = allModels.filter((model) => model.regions?.includes(region))
   return models.sort((a, b) => a.modelName.localeCompare(b.modelName))
 }
 
-// Thinking対応モデルのIDリストを取得する関数
+// Get list of model IDs that support "Thinking" mode
 export const getThinkingSupportedModelIds = (): string[] => {
   return allModels.filter((model) => model.supportsThinking === true).map((model) => model.modelId)
 }
 
-// 画像生成モデルのリージョン別取得
+// Get image generation models for a specific region
 export const getImageGenerationModelsForRegion = (region: BedrockSupportRegion) => {
   const models: Array<{ id: string; name: string }> = []
 
@@ -431,7 +431,7 @@ export const getImageGenerationModelsForRegion = (region: BedrockSupportRegion) 
   })
 
   return models.sort((a, b) => {
-    // プロバイダー順: Amazon → Stability
+    // Provider order: Amazon → Stability
     const providerOrderA = a.id.startsWith('amazon') ? 0 : 1
     const providerOrderB = b.id.startsWith('amazon') ? 0 : 1
 
@@ -439,7 +439,7 @@ export const getImageGenerationModelsForRegion = (region: BedrockSupportRegion) 
       return providerOrderA - providerOrderB
     }
 
-    // 同じプロバイダー内では名前順
+    // Within the same provider, sort by name
     return a.name.localeCompare(b.name)
   })
 }
