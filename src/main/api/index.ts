@@ -41,7 +41,7 @@ const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   })
 }
 
-// アプリケーションで動作するようにdotenvを設定する
+// Set up dotenv for application operation
 const api = express()
 const server = http.createServer(api)
 
@@ -250,7 +250,7 @@ api.get(
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id)
 
-  // storeからAWS設定を取得してNova Sonicクライアントを作成
+  // Get AWS config from store and create Nova Sonic client
   const awsConfig = store.get('aws')
 
   const sonicClient = createNovaSonicClient({
